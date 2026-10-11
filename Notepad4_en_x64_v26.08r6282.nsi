@@ -7,8 +7,8 @@
 
 ;--------------------------------
 ;General
-!define BUNDLED_VERSION "v26.01r5986"
-!define RELEASEVERSION "en_x64_v26.01r5986"
+!define BUNDLED_VERSION "v26.08r6282"
+!define RELEASEVERSION "en_x64_v26.08r6282"
 !define APPNAME "Notepad4"
 !define EXENAME "Notepad4.exe"
 

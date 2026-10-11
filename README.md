@@ -11,7 +11,7 @@ An NSIS script to create an installer for the Notepad4 binaries from https://git
 
 ## Bundled Version
 
-The current installer bundles **Notepad4 v26.01r5986** (English, x64).
+The current installer bundles **Notepad4 v26.08r6282** (English, x64).
 
 ## Usage
 
@@ -22,7 +22,7 @@ Run the installer normally. By default it installs the bundled version offline. 
 ### Silent Installation
 
 ```
-notepad4_en_x64_v26.01r5986-install.exe /S /I=full
+notepad4_en_x64_v26.08r6282-install.exe /S /I=full
 ```
 
 - `/S` — Silent mode (no GUI)
@@ -39,7 +39,7 @@ The uninstaller removes Notepad4 files and registry entries. If Windows Notepad 
 Compile with [NSIS](https://nsis.sourceforge.io/):
 
 ```
-makensis Notepad4_en_x64_v26.01r5986.nsi
+makensis Notepad4_en_x64_v26.08r6282.nsi
 ```
 
 Requires the `psexec.nsh` include file (provided in this repo) for PowerShell support.
