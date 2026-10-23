@@ -107,7 +107,8 @@ follows from them.
 3. `git mv Notepad4_en_x64_<old>.nsi Notepad4_en_x64_<new>.nsi` and update the defines at the top:
    `BUNDLED_VERSION` must equal the GitHub release tag exactly (e.g. `v26.08r6282`; the online fetch
    compares the two), `RELEASEVERSION` is `en_x64_<tag>`.
-4. Update this README: bundled version, silent-install file name, build command.
+4. Replace every `<old>` in this README (`grep -n <old> README.md`): bundled version, silent-install and
+   build output file names, build command, `License.txt` link.
 5. `makensis -WX Notepad4_en_x64_<new>.nsi` must pass. The workflows find the script as
    `Notepad4_en_x64_*.nsi` and need no change.
 
