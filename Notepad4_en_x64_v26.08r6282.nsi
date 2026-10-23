@@ -321,7 +321,7 @@ Section "Uninstall"
     DeleteRegValue HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe\0\" "FilterFullPath"
     DeleteRegValue HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe\1\" "FilterFullPath"
     DeleteRegValue HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe\2\" "FilterFullPath"
-    ${PowerShellExec} 'Get-AppxPackage -allusers Microsoft.WindowsNotepad | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register $$($_.InstallLocation)\AppXManifest.xml}'
+    ${PowerShellExec} 'Get-AppxPackage -allusers Microsoft.WindowsNotepad | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register $$($$_.InstallLocation)\AppXManifest.xml}'
 
   ${Else}
     DeleteRegValue HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\notepad.exe" "Debugger"

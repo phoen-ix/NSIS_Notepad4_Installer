@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile (makensis -WX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install NSIS
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends nsis
+
+      - name: Compile the installer (warnings are errors)
+        run: makensis -WX -V2 Notepad4_en_x64_*.nsi "-XOutFile \"$RUNNER_TEMP/notepad4-install.exe\""
