@@ -19,3 +19,34 @@ jobs:
 
       - name: Compile the installer (warnings are errors)
         run: makensis -WX -V2 Notepad4_en_x64_*.nsi "-XOutFile \"$RUNNER_TEMP/notepad4-install.exe\""
+
+  tour:
+    # Render check: the screenshot tour clicks through every installer and uninstaller page
+    # (installing Notepad4 on the throwaway runner). Commit PNGs from docs-screenshots.yml, not these.
+    name: Screenshot tour (render check)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Put NSIS on PATH
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+            if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress }
+            $nsis | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          }
+
+      - name: Run the tour
+        shell: bash
+        env:
+          DOCS_TOUR_INSTALL: '1'
+        run: bash scripts/docs-screenshots.sh "$RUNNER_TEMP/screenshots"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: tour-render-check
+          path: ${{ runner.temp }}/screenshots/
+          retention-days: 7

@@ -4,6 +4,8 @@ An [NSIS](https://nsis.sourceforge.io/) script that builds a Windows installer f
 [Notepad4](https://github.com/zufuliu/notepad4) binaries (Notepad4 and matepath), with an option to
 replace Windows Notepad.
 
+<img src="docs/screenshots/installer-components.png" alt="Installer components page: Notepad4 preselected, Fetch latest version (online) and Replace Windows Editor unchecked, install type Minimal" width="499">
+
 ## Features
 
 - Installs Notepad4 and matepath to `C:\Program Files\Notepad4`, with Start menu shortcuts and an
@@ -108,6 +110,24 @@ follows from them.
 4. Update this README: bundled version, silent-install file name, build command.
 5. `makensis -WX Notepad4_en_x64_<new>.nsi` must pass. The workflows find the script as
    `Notepad4_en_x64_*.nsi` and need no change.
+
+## Screenshots
+
+<img src="docs/screenshots/installer-license.png" alt="License agreement page showing the bundled Notepad4 license" width="499">
+<img src="docs/screenshots/installer-directory.png" alt="Install location page with C:\Program Files\Notepad4 as the destination folder" width="499">
+<img src="docs/screenshots/installer-complete.png" alt="Installation complete page with a full progress bar" width="499">
+
+All installer and uninstaller pages: [docs/screenshots](docs/screenshots/README.md).
+
+The images come from an automated tour: [`scripts/docs-screenshots.sh`](scripts/docs-screenshots.sh) compiles
+the installer and runs [`scripts/docs-tour.ps1`](scripts/docs-tour.ps1), which clicks through every page via
+UI Automation, checks each page's heading and captures the window. The tour really installs and uninstalls
+Notepad4, so it only runs on throwaway Windows machines and refuses to start without `DOCS_TOUR_INSTALL=1`.
+
+To regenerate: Actions → **Docs screenshots** → Run workflow, unzip the `docs-screenshots` artifact into
+`docs/screenshots/`, run `oxipng -o 4 --strip safe docs/screenshots/*.png`, review the diff and commit.
+On a disposable Windows VM with Git Bash and NSIS on `PATH`: `DOCS_TOUR_INSTALL=1 bash scripts/docs-screenshots.sh`.
+CI runs the same tour as a render check on every push (artifact `tour-render-check`).
 
 ## License
 

@@ -1,0 +1,45 @@
+name: Docs screenshots
+
+# Regenerates docs/screenshots/*.png: compiles the installer on windows-latest and runs
+# scripts/docs-screenshots.sh, which clicks through every installer and uninstaller page
+# (installing and uninstalling Notepad4 on the throwaway runner). The PNGs come back as the
+# `docs-screenshots` artifact - this workflow never commits. Unzip the artifact into
+# docs/screenshots/, optimise the PNGs (README "Screenshots"), look at the diff and commit it
+# yourself. The same tour runs as a render check in ci.yml.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-screenshots
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Put NSIS on PATH
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+            if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress }
+            $nsis | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          }
+
+      - name: Run the tour
+        shell: bash
+        env:
+          DOCS_TOUR_INSTALL: '1'
+        run: bash scripts/docs-screenshots.sh docs/screenshots
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-screenshots
+          path: docs/screenshots/*.png
+          retention-days: 14
