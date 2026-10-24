@@ -30,7 +30,8 @@ Defaults to the previous install's folder, else `C:\Program Files\Notepad4`. (Th
 
 ## Start menu folder
 
-Folder for the Notepad4 and matepath shortcuts; the list shows the machine's existing Start menu folders.
+Folder for the Notepad4 and matepath shortcuts; the list shows the machine's existing Start menu folders
+(the tour pins it to a few standard Windows folders).
 
 <img src="installer-start-menu.png" alt="Start menu folder page with Notepad4 as the folder name" width="499">
 

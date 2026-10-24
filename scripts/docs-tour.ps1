@@ -164,6 +164,12 @@ Save-Shot $main 'installer-directory'
 
 Click $main $IDOK
 Wait-Page $main 'Choose Start Menu Folder'
+# The folder list mirrors the machine's Start menu (runner images change it); pin it to standard folders.
+$folders = Get-Hwnd (Find-Class $main 'ListBox')
+[void][Win32]::SendMessage($folders, 0x0184, [IntPtr]::Zero, [IntPtr]::Zero)  # LB_RESETCONTENT
+foreach ($f in 'Accessibility', 'Accessories', 'Administrative Tools', 'Startup', 'System Tools', 'Windows PowerShell') {
+  [void][Win32]::SendMessage($folders, 0x0180, [IntPtr]::Zero, (New-Object System.Text.StringBuilder $f))  # LB_ADDSTRING
+}
 Save-Shot $main 'installer-start-menu'
 
 Click $main $IDOK
