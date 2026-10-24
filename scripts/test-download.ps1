@@ -1,5 +1,6 @@
 # download_update.ps1 check (Windows PowerShell 5.1+, Python on PATH), run by ci.yml: the online
-# fetch extracts the release zip only when its SHA-256 matches the digest check_update.ps1 wrote.
+# fetch extracts the release zip only when its SHA-256 matches the digest check_update.ps1 wrote,
+# and deletes a rejected zip.
 # Serves a fixture zip from 127.0.0.1 and points %TEMP% at a scratch folder.
 $ErrorActionPreference = 'Stop'
 $root = Join-Path ([IO.Path]::GetTempPath()) 'notepad4-download-test'
@@ -31,7 +32,7 @@ try {
     throw 'the zip with the matching SHA-256 was not extracted'
   }
   foreach ($bad in ('0' * 64), '') {
-    if ((Fetch $bad) -ne 'FAIL' -or (Test-Path "$env:TEMP\Notepad4_latest")) {
+    if ((Fetch $bad) -ne 'FAIL' -or (Test-Path "$env:TEMP\Notepad4_latest") -or (Test-Path "$env:TEMP\Notepad4_latest.zip")) {
       throw "the zip was accepted with SHA256='$bad'"
     }
   }
