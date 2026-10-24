@@ -102,8 +102,10 @@ follows from them.
    release asset digest.
 2. `git mv Notepad4_en_x64_<old> Notepad4_en_x64_<new>` and replace its six files with the zip's
    `Notepad4.exe`, `matepath.exe`, `License.txt` and the `*.ini-default` files renamed to `*.ini`
-   (`Notepad4.ini`, `matepath.ini`, `Notepad4 DarkTheme.ini`). If the release's file set changed, adjust
-   the `File`, `CopyFiles` and `Delete` lines in the script.
+   (`Notepad4.ini`, `matepath.ini`, `Notepad4 DarkTheme.ini`). Give `License.txt` a UTF-8 BOM
+   (`printf '\xef\xbb\xbf' | cat - License.txt > l && mv l License.txt`), otherwise the license page
+   shows `Â©`; the screenshot tour checks it. If the release's file set changed, adjust the `File`,
+   `CopyFiles` and `Delete` lines in the script.
 3. `git mv Notepad4_en_x64_<old>.nsi Notepad4_en_x64_<new>.nsi` and update the defines at the top:
    `BUNDLED_VERSION` must equal the GitHub release tag exactly (e.g. `v26.10r6392`; the online fetch
    compares the two), `RELEASEVERSION` is `en_x64_<tag>`.

@@ -22,6 +22,8 @@ public static class Win32 {
   [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern bool SetWindowText(IntPtr hwnd, string text);
   [DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint action, uint param, IntPtr value, uint winIni);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wParam, System.Text.StringBuilder text);
+  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 }
 '@
 
@@ -55,6 +57,12 @@ function Wait-For([scriptblock] $Probe, [string] $What, [int] $Seconds = 60) {
 function Find-Text($Element, [string] $Prefix) {
   foreach ($e in $Element.FindAll($Descendants, $Any)) {
     if ($e.Current.Name.StartsWith($Prefix)) { return $e }
+  }
+}
+
+function Find-Class($Element, [string] $Prefix) {
+  foreach ($e in $Element.FindAll($Descendants, $Any)) {
+    if ($e.Current.ClassName.StartsWith($Prefix)) { return $e }
   }
 }
 
@@ -121,6 +129,11 @@ $null = $proc.Handle  # keeps ExitCode readable after exit
 $main = Wait-For { Find-TopWindow { param($w) $w.Current.ProcessId -eq $proc.Id } } 'the installer window'
 
 Wait-Page $main 'License Agreement'
+# License.txt is UTF-8; without a BOM a Windows-built installer decodes it as cp1252 (mojibake for the (c) sign).
+$license = Get-Hwnd (Find-Class $main 'RichEdit')
+$text = New-Object System.Text.StringBuilder 65536
+[void][Win32]::SendMessage($license, 0x000D, [IntPtr]$text.Capacity, $text)  # WM_GETTEXT
+if (-not $text.ToString().Contains("Copyright $([char]0xA9) 2011")) { throw "license page lacks 'Copyright (c) 2011' (License.txt needs a UTF-8 BOM)" }
 Save-Shot $main 'installer-license'
 
 $quit = 'Are you sure you want to quit'
