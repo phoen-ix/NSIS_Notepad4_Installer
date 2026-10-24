@@ -40,6 +40,8 @@ Var SourceDir
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "Notepad4_${RELEASEVERSION}\License.txt"
+; No description box (the sections have none): the tree gets the full width, so no name is cut off
+!define MUI_COMPONENTSPAGE_NODESC
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 

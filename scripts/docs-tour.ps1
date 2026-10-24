@@ -8,7 +8,7 @@ param(
   [Parameter(Mandatory = $true)] [string] $OutDir
 )
 $ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing, System.Windows.Forms
 Add-Type @'
 using System;
 using System.Runtime.InteropServices;
@@ -64,6 +64,7 @@ function Find-Class($Element, [string] $Prefix) {
   foreach ($e in $Element.FindAll($Descendants, $Any)) {
     if ($e.Current.ClassName.StartsWith($Prefix)) { return $e }
   }
+  throw "no $Prefix control"
 }
 
 function Find-TopWindow([scriptblock] $Match) {
@@ -146,6 +147,11 @@ Click $box $IDNO
 Click $main $IDOK
 Wait-Page $main 'Choose Components'
 Wait-Page $main 'Minimal' 10  # .onInit preselects Notepad4 only (UIA does not expose the tree items)
+# The longest component name must fit the tree (+ checkbox, indent, border); it used to be cut off.
+$tree = Find-Class $main 'SysTreeView32'
+$need = [System.Windows.Forms.TextRenderer]::MeasureText('Fetch latest version (online)', [System.Drawing.SystemFonts]::DialogFont).Width + 40
+$width = $tree.Current.BoundingRectangle.Width
+if ($width -lt $need) { throw "components tree is ${width}px wide, 'Fetch latest version (online)' needs ${need}px" }
 Save-Shot $main 'installer-components'
 
 Click $main $IDOK
