@@ -23,7 +23,7 @@ OutFile "notepad4_${RELEASEVERSION}-install.exe"
 
 SetCompressor /SOLID /FINAL lzma
 
-InstallDir "$PROGRAMFILES\Notepad4"
+InstallDir "$PROGRAMFILES64\Notepad4"
 InstallDirRegKey HKLM "Software\Notepad4" "Install_Dir"
 
 RequestExecutionLevel admin
@@ -64,7 +64,7 @@ InstType "Full"
 ; Parse command line parameters
 Function .onInit
 
-    StrCpy $INSTDIR "$PROGRAMFILES64\Notepad4"
+    ; $INSTDIR is set already: /D=, else the previous install (InstallDirRegKey), else InstallDir
     StrCpy $DisplayVersion "${BUNDLED_VERSION}"
     StrCpy $SourceDir ""
 

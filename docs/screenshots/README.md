@@ -24,7 +24,7 @@ Notepad4 (with matepath) is always installed. **Replace Windows Editor** and **F
 
 ## Install location
 
-Defaults to `C:\Program Files\Notepad4`. (The tour pins the machine-dependent "Space available" to 100.0 GB.)
+Defaults to the previous install's folder, else `C:\Program Files\Notepad4`. (The tour pins the machine-dependent "Space available" to 100.0 GB.)
 
 <img src="installer-directory.png" alt="Install location page with the destination folder C:\Program Files\Notepad4" width="499">
 

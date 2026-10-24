@@ -8,8 +8,8 @@ replace Windows Notepad.
 
 ## Features
 
-- Installs Notepad4 and matepath to `C:\Program Files\Notepad4`, with Start menu shortcuts and an
-  Apps & Features entry
+- Installs Notepad4 and matepath (default folder `C:\Program Files\Notepad4`; an update reuses the
+  previous install's folder), with Start menu shortcuts and an Apps & Features entry
 - Optional: **Replace Windows Editor** — every `notepad.exe` launch opens Notepad4 (Windows 10/11)
 - Optional: **Fetch latest version (online)** — opt-in; queries GitHub for the latest Notepad4 release
   and installs it instead of the bundled one if its tag differs (see [Online update](#online-update)).
@@ -43,12 +43,12 @@ notepad4_en_x64_v26.10r6392-install.exe /S /I=full
 - `/I=full` — also replace Windows Notepad (does not enable the online fetch)
 - `/I=minimal` — Notepad4 only (the default; any value other than `full` behaves the same)
 - `/UPDATE` — enable the online fetch of the latest version (silent mode only)
-
-Silent installs always go to `C:\Program Files\Notepad4` (`/D=` is ignored).
+- `/D=C:\path\to\Notepad4` — install folder; must be the last parameter and unquoted, even with spaces.
+  Without it the previous install's folder is used, else `C:\Program Files\Notepad4`.
 
 ## Replace Windows Editor
 
-The section registers `"C:\Program Files\Notepad4\Notepad4.exe" /z` as the `Debugger` for `notepad.exe`
+The section registers `"<install folder>\Notepad4.exe" /z` as the `Debugger` for `notepad.exe`
 under `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options`. On Windows 11 it
 also removes the Windows Notepad app package (`Get-AppxPackage *Microsoft.WindowsNotepad* | Remove-AppxPackage`)
 and adds the IFEO filter entries.

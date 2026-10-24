@@ -50,3 +50,28 @@ jobs:
           name: tour-render-check
           path: ${{ runner.temp }}/screenshots/
           retention-days: 7
+
+  installer-tests:
+    # Silent installs on the throwaway runner; each script says what it checks.
+    name: Installer tests (windows)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Put NSIS on PATH
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+            if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress }
+            $nsis | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          }
+
+      - name: Compile the installer
+        shell: bash
+        run: makensis -WX -V2 Notepad4_en_x64_*.nsi "-XOutFile \"$RUNNER_TEMP/notepad4-install.exe\""
+
+      - name: Silent install (/D=, previous install folder)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1 -Installer "$env:RUNNER_TEMP\notepad4-install.exe"
