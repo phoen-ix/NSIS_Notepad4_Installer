@@ -60,12 +60,13 @@ helpers to the installer's temp directory and runs them:
 
 1. [`check_update.ps1`](check_update.ps1) asks the GitHub API for the latest `zufuliu/notepad4` release
    (10 s timeout), picks the first asset matching `Notepad4_en_x64_*.zip` that is not an `HD` build,
-   and writes `TagName`, `DownloadURL` and `Status` (`OK`, `NoAsset` or `Error`) to
-   `%TEMP%\notepad4_update.ini`.
+   and writes `TagName`, `DownloadURL`, `SHA256` (the asset's `digest` from the API) and `Status`
+   (`OK`, `NoAsset` or `Error`) to `%TEMP%\notepad4_update.ini`.
 2. If the status is `OK` and the tag differs from `BUNDLED_VERSION`, the installer asks whether to
    download it (silent mode downloads without asking).
 3. [`download_update.ps1`](download_update.ps1) downloads the zip (60 s timeout) to
-   `%TEMP%\Notepad4_latest.zip`, extracts it to `%TEMP%\Notepad4_latest` (moving the contents of a
+   `%TEMP%\Notepad4_latest.zip` and rejects it unless its SHA-256 equals `SHA256` (a missing digest
+   is a rejection too). It extracts the zip to `%TEMP%\Notepad4_latest` (moving the contents of a
    top-level folder up), copies every `*.ini-default` to `*.ini`, and writes `OK` or `FAIL` to
    `%TEMP%\notepad4_download_status.txt`.
 4. On `OK` the installer copies the downloaded `Notepad4.exe`, `matepath.exe`, the three `.ini` files
@@ -90,7 +91,10 @@ makensis -WX Notepad4_en_x64_v26.10r6392.nsi
 This writes `notepad4_en_x64_v26.10r6392-install.exe` next to the script (git-ignored). The script
 includes [`psexec.nsh`](psexec.nsh) (PowerShell exec macros) and embeds the two update helpers and
 [`Notepad4_Installer.ico`](Notepad4_Installer.ico). CI ([`ci.yml`](.github/workflows/ci.yml)) compiles it
-with warnings as errors on every push and pull request.
+with warnings as errors on every push and pull request, and on windows-latest runs
+[`scripts/test-install.ps1`](scripts/test-install.ps1) (silent install with `/D=`, reinstall into the
+previous folder, uninstall) and [`scripts/test-download.ps1`](scripts/test-download.ps1) (the online
+download is used only with a matching SHA-256).
 
 ## Updating to a new Notepad4 release
 

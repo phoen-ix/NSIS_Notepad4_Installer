@@ -75,3 +75,8 @@ jobs:
       - name: Silent install (/D=, previous install folder)
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1 -Installer "$env:RUNNER_TEMP\notepad4-install.exe"
+
+      - name: Online download checks the SHA-256
+        if: success() || failure()
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-download.ps1

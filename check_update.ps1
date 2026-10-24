@@ -10,6 +10,7 @@ try {
         "[Update]" | Out-File $iniFile -Encoding ASCII
         "TagName=$tagName" | Out-File $iniFile -Append -Encoding ASCII
         "DownloadURL=$downloadUrl" | Out-File $iniFile -Append -Encoding ASCII
+        "SHA256=$($asset.digest -replace '^sha256:')" | Out-File $iniFile -Append -Encoding ASCII
         "Status=OK" | Out-File $iniFile -Append -Encoding ASCII
     } else {
         "[Update]" | Out-File $iniFile -Encoding ASCII
