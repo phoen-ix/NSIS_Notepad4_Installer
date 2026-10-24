@@ -18,7 +18,7 @@ replace Windows Notepad.
 
 ## Bundled Version
 
-The current installer bundles **Notepad4 v26.08r6282** (English, x64).
+The current installer bundles **Notepad4 v26.10r6392** (English, x64).
 
 ## Usage
 
@@ -36,7 +36,7 @@ The components page offers three install types:
 ### Silent Installation
 
 ```
-notepad4_en_x64_v26.08r6282-install.exe /S /I=full
+notepad4_en_x64_v26.10r6392-install.exe /S /I=full
 ```
 
 - `/S` — Silent mode (no GUI)
@@ -84,10 +84,10 @@ was replaced, it is restored (on Windows 11 the Windows Notepad app package is r
 Compile with NSIS 3 (Windows, or Linux with `apt install nsis`):
 
 ```
-makensis -WX Notepad4_en_x64_v26.08r6282.nsi
+makensis -WX Notepad4_en_x64_v26.10r6392.nsi
 ```
 
-This writes `notepad4_en_x64_v26.08r6282-install.exe` next to the script (git-ignored). The script
+This writes `notepad4_en_x64_v26.10r6392-install.exe` next to the script (git-ignored). The script
 includes [`psexec.nsh`](psexec.nsh) (PowerShell exec macros) and embeds the two update helpers and
 [`Notepad4_Installer.ico`](Notepad4_Installer.ico). CI ([`ci.yml`](.github/workflows/ci.yml)) compiles it
 with warnings as errors on every push and pull request.
@@ -105,7 +105,7 @@ follows from them.
    (`Notepad4.ini`, `matepath.ini`, `Notepad4 DarkTheme.ini`). If the release's file set changed, adjust
    the `File`, `CopyFiles` and `Delete` lines in the script.
 3. `git mv Notepad4_en_x64_<old>.nsi Notepad4_en_x64_<new>.nsi` and update the defines at the top:
-   `BUNDLED_VERSION` must equal the GitHub release tag exactly (e.g. `v26.08r6282`; the online fetch
+   `BUNDLED_VERSION` must equal the GitHub release tag exactly (e.g. `v26.10r6392`; the online fetch
    compares the two), `RELEASEVERSION` is `en_x64_<tag>`.
 4. Replace every `<old>` in this README (`grep -n <old> README.md`): bundled version, silent-install and
    build output file names, build command, `License.txt` link.
@@ -134,4 +134,4 @@ CI runs the same tour as a render check on every push (artifact `tour-render-che
 
 The installer script is MIT-licensed ([LICENSE](LICENSE)). Notepad4 and matepath are distributed under
 their own license, shown on the installer's first page
-([`License.txt`](Notepad4_en_x64_v26.08r6282/License.txt)).
+([`License.txt`](Notepad4_en_x64_v26.10r6392/License.txt)).
