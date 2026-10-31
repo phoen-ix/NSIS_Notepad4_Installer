@@ -22,7 +22,7 @@ jobs:
 
   e2e:
     # scripts/e2e.sh on throwaway runners: the screenshot tour as the page sweep, then the silent
-    # install, Windows Notepad replacement, online-update and uninstall journeys (e2e/COVERAGE.md).
+    # install, Windows Notepad replacement, online-update, wizard and uninstall journeys (e2e/COVERAGE.md).
     # windows-2022 takes the installer's pre-Windows 11 branch, windows-2025 (build 26100) the Windows 11 one.
     name: E2E (${{ matrix.os }})
     strategy:

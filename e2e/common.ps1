@@ -40,10 +40,10 @@ function Install([string] $Arguments) {
 
 # Like Apps & Features, but silent: Uninstall.exe copies itself to %TEMP% and returns at once,
 # so it is done when the install folder is gone.
-function Uninstall {
-  $p = Start-Process -FilePath "$dir\Uninstall.exe" -ArgumentList '/S' -Wait -PassThru
+function Uninstall([string] $From = $dir) {
+  $p = Start-Process -FilePath "$From\Uninstall.exe" -ArgumentList '/S' -Wait -PassThru
   if ($p.ExitCode -ne 0) { throw "Uninstall.exe /S exited with $($p.ExitCode)" }
-  [void](Wait-For { -not (Test-Path $dir) } "the uninstaller to remove $dir")
+  [void](Wait-For { -not (Test-Path $From) } "the uninstaller to remove $From")
 }
 
 # The bundled version: byte-identical to the payload folder, and so recorded in Apps & Features.

@@ -77,6 +77,7 @@ function Wait-Page($Window, [string] $Text, [int] $Seconds = 60) {
 
 # Waits for the message box of $Owner whose text starts with $Text and presses its button $Button,
 # again until the box is gone (a click that arrives while the box is still opening gets lost).
+# Uses the button's own control ID: in an MB_OK box, OK is 2, not IDOK.
 function Answer($Owner, [string] $Text, [string] $Button, [int] $Seconds = 120) {
   $box = Wait-For { Find-Dialog $Owner $Text } "'$Text'" $Seconds
   $named = New-Object System.Windows.Automation.PropertyCondition($UIA::NameProperty, $Button)
@@ -84,9 +85,22 @@ function Answer($Owner, [string] $Text, [string] $Button, [int] $Seconds = 120) 
   [void](Wait-For { Click $box $id; -not (Find-Dialog $Owner $Text) } "'$Text' to close" 30)
 }
 
-# Starts the wizard and clicks through to Install, keeping the preselected components (Minimal)
-# or picking install type $Type. Returns the process and its main window.
-function Start-Wizard([string] $Arguments, [ValidateSet('Typical', 'Minimal', 'Full')] [string] $Type) {
+# Tells the dialog that owns control $Hwnd what a user action on it would (WM_COMMAND).
+function Notify([IntPtr] $Hwnd, [int] $Code) {
+  $wParam = [IntPtr](($Code -shl 16) -bor [Win32]::GetDlgCtrlID($Hwnd))
+  [void][Win32]::SendMessage([Win32]::GetParent($Hwnd), 0x0111, $wParam, $Hwnd)
+}
+
+function Set-EditText($Window, [string] $Text) {
+  $edit = Get-Hwnd (Wait-For { Find-Class $Window 'Edit' } 'the folder field' 10)
+  [void][Win32]::SendMessage($edit, 0x000C, [IntPtr]::Zero, (New-Object System.Text.StringBuilder $Text))  # WM_SETTEXT
+}
+
+# Starts the wizard and clicks through to Install. Without parameters it keeps every default:
+# Minimal, C:\Program Files\Notepad4, Start menu folder Notepad4. -Fetch ticks "Fetch latest
+# version (online)" in the tree, as a user would with the space bar. Returns the process and its window.
+function Start-Wizard([string] $Arguments, [ValidateSet('Typical', 'Minimal', 'Full')] [string] $Type,
+                      [switch] $Fetch, [string] $Folder, [string] $MenuFolder, [switch] $NoShortcuts) {
   $params = @{ FilePath = $Installer; PassThru = $true }
   if ($Arguments) { $params.ArgumentList = $Arguments }
   $p = Start-Process @params
@@ -99,14 +113,29 @@ function Start-Wizard([string] $Arguments, [ValidateSet('Typical', 'Minimal', 'F
     $combo = Get-Hwnd (Find-Class $w 'ComboBox')
     $index = [array]::IndexOf(@('Typical', 'Minimal', 'Full'), $Type)  # the InstType order
     [void][Win32]::SendMessage($combo, 0x014E, [IntPtr]$index, [IntPtr]::Zero)  # CB_SETCURSEL
-    $notify = [IntPtr]((1 -shl 16) -bor [Win32]::GetDlgCtrlID($combo))      # CBN_SELCHANGE, as a click would send
-    [void][Win32]::SendMessage([Win32]::GetParent($combo), 0x0111, $notify, $combo)
+    Notify $combo 1  # CBN_SELCHANGE
     Wait-Page $w $Type 10
+  }
+  if ($Fetch) {
+    $tree = Get-Hwnd (Wait-For { Find-Class $w 'SysTreeView32' } 'the component tree' 10)
+    $first = [Win32]::SendMessage($tree, 0x110A, [IntPtr]::Zero, [IntPtr]::Zero)  # TVM_GETNEXTITEM, TVGN_ROOT: section 0
+    [void][Win32]::SendMessage($tree, 0x110B, [IntPtr]9, $first)  # TVM_SELECTITEM, TVGN_CARET
+    [void][Win32]::PostMessage($tree, 0x0100, [IntPtr]0x20, [IntPtr]::Zero)  # WM_KEYDOWN, VK_SPACE
+    $combo = Get-Hwnd (Find-Class $w 'ComboBox')
+    $shown = New-Object System.Text.StringBuilder 64
+    [void](Wait-For { [void][Win32]::SendMessage($combo, 0x000D, [IntPtr]$shown.Capacity, $shown); $shown.ToString() -eq 'Custom' } 'install type Custom' 10)  # WM_GETTEXT
   }
   Click $w $IDOK
   Wait-Page $w 'Choose Install Location'
+  if ($Folder) { Set-EditText $w $Folder }
   Click $w $IDOK
   Wait-Page $w 'Choose Start Menu Folder'
+  if ($MenuFolder) { Set-EditText $w $MenuFolder }
+  if ($NoShortcuts) {
+    $check = Get-Hwnd (Wait-For { Find-Text $w 'Do not create shortcuts' } 'the shortcuts checkbox' 10)
+    [void][Win32]::SendMessage($check, 0x00F1, [IntPtr]1, [IntPtr]::Zero)  # BM_SETCHECK
+    Notify $check 0  # BN_CLICKED
+  }
   Click $w $IDOK
   $p, $w
 }

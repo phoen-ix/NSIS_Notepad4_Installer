@@ -44,4 +44,5 @@ psh e2e/test-install.ps1 -Installer "$installer"
 psh e2e/test-silent.ps1 -Installer "$installer"
 psh e2e/test-update.ps1 -Installer "$(winpath "$work/notepad4-fixture.exe")" -Port "$port"
 psh e2e/test-download.ps1
+psh e2e/test-wizard.ps1 -Installer "$installer"
 echo "e2e: all passed"

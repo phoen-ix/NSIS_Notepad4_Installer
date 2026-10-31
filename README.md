@@ -103,8 +103,10 @@ tests:
 - [`e2e/test-silent.ps1`](e2e/test-silent.ps1): what `/S` and `/I=` install, that `notepad.exe` opens
   Notepad4 after `/I=full`, the uninstaller, and quitting the wizard;
 - [`e2e/test-update.ps1`](e2e/test-update.ps1): the online fetch against a local fake of the release
-  API, both silent and in the wizard (including its two message boxes);
-- [`e2e/test-download.ps1`](e2e/test-download.ps1): the SHA-256 check of the download.
+  API, both silent and in the wizard (its two message boxes, and the component ticked by hand);
+- [`e2e/test-download.ps1`](e2e/test-download.ps1): the SHA-256 check of the download;
+- [`e2e/test-wizard.ps1`](e2e/test-wizard.ps1): a typed install folder and Start menu folder, "Do not
+  create shortcuts", and Cancel in the uninstaller.
 
 [`e2e/COVERAGE.md`](e2e/COVERAGE.md) maps every feature to its test.
 

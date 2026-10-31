@@ -133,6 +133,15 @@ try {
     Assert-Equal (Debugger) $replaced 'notepad.exe Debugger after Typical'
     Uninstall
   }
+
+  Test 'Fetch latest version ticked by hand (Custom) installs the newer release and leaves Windows Notepad alone' {
+    Publish $tag $digest
+    $wizard = { $p, $w = Start-Wizard -Fetch; Answer $w "A newer version of Notepad4 is available: $tag" Yes; Complete-Wizard $p $w }
+    Assert-Equal (Install-Fetching $wizard) "/latest.json /$zip" 'requests'
+    Assert-Equal (Get-ItemProperty $arp).DisplayVersion $tag 'DisplayVersion'
+    Assert-Equal (Debugger) $null 'notepad.exe Debugger'
+    Uninstall
+  }
 } finally {
   Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
 }
