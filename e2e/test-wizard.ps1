@@ -23,10 +23,11 @@ Test 'the wizard installs into the folder and Start menu folder typed in; the un
   foreach ($path in $menu, $key, $arp) { if (Test-Path $path) { throw "the uninstall left $path" } }
 }
 
-Test 'Do not create shortcuts installs Notepad4 without a Start menu folder' {
+Test 'the wizard default (Minimal) with Do not create shortcuts installs Notepad4 only, without a Start menu folder' {
   $p, $w = Start-Wizard -NoShortcuts
   Complete-Wizard $p $w
   Assert-Bundled 'no shortcuts'
+  Assert-Equal (Debugger) $null 'notepad.exe Debugger after Minimal'
   if (Test-Path "$programs\Notepad4") { throw "created $programs\Notepad4" }
   Assert-Equal (Get-ItemProperty $key).'Start Menu Folder' $null 'Start Menu Folder'
   Uninstall

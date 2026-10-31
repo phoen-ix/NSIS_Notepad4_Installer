@@ -7,6 +7,10 @@ $menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Notepad4'  # the i
 $doc = "$env:TEMP\notepad4-e2e.txt"
 Set-Content $doc 'e2e'
 $shell = New-Object -ComObject WScript.Shell
+# The installer's ${AtLeastWin11} branch (build 22000 on) sets IFEO filter keys instead of UseFilter=0.
+$win11 = [int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').CurrentBuildNumber -ge 22000
+function FilterFullPath([int] $Index) { (Get-ItemProperty "$ifeo\$Index" -ErrorAction SilentlyContinue).FilterFullPath }
+function UseFilter { (Get-ItemProperty $ifeo -ErrorAction SilentlyContinue).UseFilter }
 
 # Opens $doc with notepad.exe; returns the process name of the editor that shows it.
 function Open-WithNotepad {
@@ -56,11 +60,21 @@ Test '/S /I=full replaces Windows Notepad: notepad.exe opens Notepad4' {
   Install '/S /I=full'
   Assert-Equal (Open-WithNotepad) 'Notepad4' 'editor started by notepad.exe'
   Assert-Equal (Debugger) $replaced 'notepad.exe Debugger'
+  if ($win11) {
+    foreach ($i in 0..2) { Assert-Equal (FilterFullPath $i) "$dir\Notepad4.exe" "notepad.exe\$i FilterFullPath" }
+  } else {
+    Assert-Equal (UseFilter) 0 'notepad.exe UseFilter'
+  }
 }
 
 Test 'the uninstaller gives notepad.exe back to Windows Notepad' {
   Uninstall
   Assert-Equal (Debugger) $null 'notepad.exe Debugger after the uninstall'
+  if ($win11) {
+    foreach ($i in 0..2) { Assert-Equal (FilterFullPath $i) $null "notepad.exe\$i FilterFullPath after the uninstall" }
+  } else {
+    Assert-Equal (UseFilter) $null 'notepad.exe UseFilter after the uninstall'
+  }
   Assert-Equal (Open-WithNotepad) 'notepad' 'editor started by notepad.exe after the uninstall'
 }
 

@@ -1,7 +1,8 @@
 # download_update.ps1 check (Windows PowerShell 5.1+, Python on PATH), run by scripts/e2e.sh: the online
 # fetch extracts the release zip only when its SHA-256 matches the digest check_update.ps1 wrote,
 # and deletes a rejected zip.
-# Serves a fixture zip from 127.0.0.1 and points %TEMP% at a scratch folder.
+# Serves a fixture zip from 127.0.0.1:$Port and points %TEMP% at a scratch folder.
+param([int] $Port = 8765)
 $ErrorActionPreference = 'Stop'
 $root = Join-Path ([IO.Path]::GetTempPath()) 'notepad4-download-test'
 Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
@@ -10,7 +11,7 @@ $env:TEMP = (New-Item -ItemType Directory "$root\temp").FullName  # inherited by
 Set-Content "$serve\Notepad4.ini-default" 'fixture'
 Compress-Archive "$serve\Notepad4.ini-default" "$serve\release.zip"
 $good = (Get-FileHash "$serve\release.zip" -Algorithm SHA256).Hash.ToLower()
-$url = 'http://127.0.0.1:8765/release.zip'
+$url = "http://127.0.0.1:$Port/release.zip"
 
 function Fetch([string] $Sha256) {
   Remove-Item "$env:TEMP\*" -Recurse -Force
@@ -20,7 +21,7 @@ function Fetch([string] $Sha256) {
   (Get-Content "$env:TEMP\notepad4_download_status.txt").Trim()
 }
 
-$server = Start-Process python -ArgumentList '-m http.server 8765 --bind 127.0.0.1' -WorkingDirectory $serve -PassThru -WindowStyle Hidden
+$server = Start-Process python -ArgumentList "-m http.server $Port --bind 127.0.0.1" -WorkingDirectory $serve -PassThru -WindowStyle Hidden
 try {
   $deadline = (Get-Date).AddSeconds(30)
   while ($true) {

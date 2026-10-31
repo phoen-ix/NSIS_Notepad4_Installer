@@ -30,9 +30,9 @@ How the tests work:
   except that `check_update.ps1` asks `http://127.0.0.1:$PORT_BASE/latest.json`. The local server
   answers in the GitHub API's shape and hosts the release zip.
 
-**Totals: 57 rows. 48 ✅, 9 ❌ (2 × a, 1 × d, 6 × e).**
+**Totals: 57 rows. 47 ✅, 10 ❌ (2 × a, 1 × d, 7 × e).**
 
-**TODO (e), about 30 min:** rows 5, 7, 9, 10, 13 and 49 have journeys in `e2e/test-wizard.ps1` and at the
+**TODO (e), about 30 min:** rows 5, 7, 9, 10, 13, 16 and 49 have journeys in `e2e/test-wizard.ps1` and at the
 end of `e2e/test-update.ps1`, but they have not run on Windows yet. Their first CI run decides: fix what
 it shows, then turn the rows ✅. The ✅ rows passed in CI run 41163611794 on windows-2022 and windows-2025.
 
@@ -49,7 +49,7 @@ it shows, then turn the rows ✅. The ✅ rows passed in CI run 41163611794 on w
 | 7 | A folder (with spaces) typed on the install location page: files, `Install_Dir`, Apps & Features and shortcut targets use it | `e2e/test-wizard.ps1 › the wizard installs into the folder and Start menu folder typed in; the uninstaller removes both` | ❌ (e) written, not run yet (TODO below) |
 | 8 | Start menu folder page | `scripts/docs-tour.ps1 › installer-start-menu` | ✅ |
 | 9 | A Start menu folder typed in: shortcuts there, recorded as `Start Menu Folder` | same | ❌ (e) written, not run yet (TODO below) |
-| 10 | "Do not create shortcuts": no Start menu folder, no `Start Menu Folder` value | `e2e/test-wizard.ps1 › Do not create shortcuts installs Notepad4 without a Start menu folder` | ❌ (e) written, not run yet (TODO below) |
+| 10 | "Do not create shortcuts": no Start menu folder, no `Start Menu Folder` value | `e2e/test-wizard.ps1 › the wizard default (Minimal) with Do not create shortcuts installs Notepad4 only, without a Start menu folder` | ❌ (e) written, not run yet (TODO below) |
 | 11 | Install progress and Installation Complete (exit code 0) | `scripts/docs-tour.ps1 › installer-complete` | ✅ |
 | 12 | Uninstaller confirm page (as Apps & Features starts it, without `/S`) | `scripts/docs-tour.ps1 › uninstaller-confirm` | ✅ |
 | 13 | Cancel on the uninstaller confirm page keeps the install | `e2e/test-wizard.ps1 › Cancel in the uninstaller keeps Notepad4 installed` | ❌ (e) written, not run yet (TODO below) |
@@ -60,7 +60,7 @@ it shows, then turn the rows ✅. The ✅ rows passed in CI run 41163611794 on w
 
 | # | Item | Test | |
 |---|---|---|---|
-| 16 | Minimal (wizard default): Notepad4 only | `scripts/docs-tour.ps1 › installer-complete` | ✅ |
+| 16 | Minimal (wizard default): Notepad4 only, Windows Notepad untouched, nothing fetched | `scripts/docs-tour.ps1 › installer-components` (Minimal preselected), `e2e/test-wizard.ps1 › the wizard default (Minimal) with Do not create shortcuts installs Notepad4 only, without a Start menu folder` | ❌ (e) written, not run yet (TODO below) |
 | 17 | Typical in the wizard: also replaces Windows Notepad | `e2e/test-update.ps1 › Typical in the wizard replaces Windows Notepad and ignores /UPDATE` | ✅ |
 | 18 | Full in the wizard: also replaces Windows Notepad and fetches online | `e2e/test-update.ps1 › the wizard asks before installing a newer release; Yes installs it` | ✅ |
 
@@ -91,8 +91,8 @@ it shows, then turn the rows ✅. The ✅ rows passed in CI run 41163611794 on w
 
 | # | Item | Test | |
 |---|---|---|---|
-| 32 | Before Windows 11: IFEO `Debugger`, so `notepad.exe <file>` opens the file in Notepad4 | `e2e/test-silent.ps1 › /S /I=full replaces Windows Notepad: notepad.exe opens Notepad4` (windows-2022) | ✅ |
-| 33 | Windows 11 branch (`${AtLeastWin11}`): the same, plus the filter keys | same (windows-2025, build 26100) | ✅ |
+| 32 | Before Windows 11: IFEO `Debugger` and `UseFilter` = 0, so `notepad.exe <file>` opens the file in Notepad4 | `e2e/test-silent.ps1 › /S /I=full replaces Windows Notepad: notepad.exe opens Notepad4` (windows-2022) | ✅ |
+| 33 | Windows 11 branch (`${AtLeastWin11}`): `Debugger`, and `FilterFullPath` under `notepad.exe\0`, `\1`, `\2` instead of `UseFilter` | same (windows-2025, build 26100) | ✅ |
 | 34 | Windows 11: removes the Windows Notepad app package | — | ❌ (a) needs a Windows 11 client edition with the Store Notepad app. GitHub's x64 Windows runners are Server editions and do not have the package. |
 
 ## Online fetch (section Fetch latest version)
@@ -120,8 +120,8 @@ it shows, then turn the rows ✅. The ✅ rows passed in CI run 41163611794 on w
 | 48 | Removes the Start menu folder and shortcuts | same | ✅ |
 | 49 | Removes the Start menu folder chosen in the wizard (read back from `Start Menu Folder`) | `e2e/test-wizard.ps1 › the wizard installs into the folder and Start menu folder typed in; the uninstaller removes both` | ❌ (e) written, not run yet (TODO below) |
 | 50 | Removes `HKLM\SOFTWARE\Notepad4` and the Apps & Features entry | `e2e/test-silent.ps1 › the uninstaller removes the files, registry entries and Start menu folder` | ✅ |
-| 51 | Gives `notepad.exe` back to Windows Notepad (before Windows 11) | `e2e/test-silent.ps1 › the uninstaller gives notepad.exe back to Windows Notepad` (windows-2022) | ✅ |
-| 52 | The same on the Windows 11 branch | same (windows-2025) | ✅ |
+| 51 | Gives `notepad.exe` back to Windows Notepad (before Windows 11): `Debugger` and `UseFilter` gone | `e2e/test-silent.ps1 › the uninstaller gives notepad.exe back to Windows Notepad` (windows-2022) | ✅ |
+| 52 | The same on the Windows 11 branch: `Debugger` and the three `FilterFullPath` values gone | same (windows-2025) | ✅ |
 | 53 | Windows 11: re-registers the Windows Notepad app package | — | ❌ (a) same reason as row 34 |
 | 54 | Keeps a `notepad.exe` replacement that another tool made | `e2e/test-silent.ps1 › the uninstaller keeps a notepad.exe replacement it did not make` | ✅ |
 | 55 | Silent uninstall (`Uninstall.exe /S`) | every `Uninstall` call in `e2e/test-silent.ps1` and `e2e/test-update.ps1` | ✅ |
