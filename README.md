@@ -91,10 +91,29 @@ makensis -WX Notepad4_en_x64_v26.10r6392.nsi
 This writes `notepad4_en_x64_v26.10r6392-install.exe` next to the script (git-ignored). The script
 includes [`psexec.nsh`](psexec.nsh) (PowerShell exec macros) and embeds the two update helpers and
 [`Notepad4_Installer.ico`](Notepad4_Installer.ico). CI ([`ci.yml`](.github/workflows/ci.yml)) compiles it
-with warnings as errors on every push and pull request, and on windows-latest runs
-[`scripts/test-install.ps1`](scripts/test-install.ps1) (silent install with `/D=`, reinstall into the
-previous folder, uninstall) and [`scripts/test-download.ps1`](scripts/test-download.ps1) (the online
-download is used only with a matching SHA-256).
+with warnings as errors on every push and pull request, and runs the [E2E](#e2e) suite.
+
+## E2E
+
+[`scripts/e2e.sh`](scripts/e2e.sh) compiles the installer and a fixture build. In the fixture build the
+online fetch asks `127.0.0.1:${PORT_BASE:-8765}` instead of the GitHub API. The script then runs these
+tests:
+- the screenshot tour, as the sweep over every wizard page;
+- [`e2e/test-install.ps1`](e2e/test-install.ps1): `/D=` and the previous install folder;
+- [`e2e/test-silent.ps1`](e2e/test-silent.ps1): what `/S` and `/I=` install, that `notepad.exe` opens
+  Notepad4 after `/I=full`, the uninstaller, and quitting the wizard;
+- [`e2e/test-update.ps1`](e2e/test-update.ps1): the online fetch against a local fake of the release
+  API, both silent and in the wizard (including its two message boxes);
+- [`e2e/test-download.ps1`](e2e/test-download.ps1): the SHA-256 check of the download.
+
+[`e2e/COVERAGE.md`](e2e/COVERAGE.md) maps every feature to its test.
+
+The tests really install Notepad4, replace Windows Notepad for a while and uninstall again. They
+therefore run only on throwaway Windows machines, and refuse to start without `E2E_INSTALL=1`. CI's `e2e`
+job runs them on windows-2022 and windows-2025, which cover the pre-Windows 11 branch and the
+Windows 11 branch of the installer. On a disposable Windows VM with Git Bash, NSIS and Python on `PATH`,
+run `E2E_INSTALL=1 bash scripts/e2e.sh`. Output goes to `$ARTIFACTS`. Anywhere else the script stops
+after the two compiles.
 
 ## Updating to a new Notepad4 release
 
@@ -134,7 +153,7 @@ Notepad4, so it only runs on throwaway Windows machines and refuses to start wit
 To regenerate: Actions → **Docs screenshots** → Run workflow, unzip the `docs-screenshots` artifact into
 `docs/screenshots/`, run `oxipng -o 4 --strip safe docs/screenshots/*.png`, review the diff and commit.
 On a disposable Windows VM with Git Bash and NSIS on `PATH`: `DOCS_TOUR_INSTALL=1 bash scripts/docs-screenshots.sh`.
-CI runs the same tour as a render check on every push (artifact `tour-render-check`).
+CI runs the same tour as part of the [E2E](#e2e) suite on every push (artifacts `e2e-windows-*`, folder `screenshots/`).
 
 ## License
 

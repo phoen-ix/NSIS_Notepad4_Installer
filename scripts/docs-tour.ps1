@@ -1,4 +1,4 @@
-# Screenshot tour, called by scripts/docs-screenshots.sh (Windows PowerShell 5.1+).
+# Screenshot tour (Windows PowerShell 5.1+), called by scripts/docs-screenshots.sh and, as the page sweep, by scripts/e2e.sh.
 # Starts the compiled installer, waits for each wizard page by its MUI header text (the
 # assertion), captures the window to <OutDir>\<name>.png and clicks on. It installs Notepad4
 # with the preselected minimal components (no online fetch, Windows Notepad untouched) and
@@ -8,96 +8,11 @@ param(
   [Parameter(Mandatory = $true)] [string] $OutDir
 )
 $ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing, System.Windows.Forms
-Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-public static class Win32 {
-  [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
-  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
-  [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out RECT rect, int size);
-  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hwnd, IntPtr hdc, uint flags);
-  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hwnd);
-  [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
-  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern bool SetWindowText(IntPtr hwnd, string text);
-  [DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint action, uint param, IntPtr value, uint winIni);
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wParam, System.Text.StringBuilder text);
-  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-}
-'@
-
-$UIA = [System.Windows.Automation.AutomationElement]
-$Any = [System.Windows.Automation.Condition]::TrueCondition
-$IsWindow = New-Object System.Windows.Automation.PropertyCondition($UIA::ControlTypeProperty, [System.Windows.Automation.ControlType]::Window)
-$Children = [System.Windows.Automation.TreeScope]::Children
-$Descendants = [System.Windows.Automation.TreeScope]::Descendants
-# NSIS wizard buttons: Next / I Agree / Install / Uninstall / Close = 1, Cancel = 2; message box No = 7.
-$IDOK = 1; $IDCANCEL = 2; $IDNO = 7
+. "$PSScriptRoot\..\e2e\uia.ps1"
 
 # No progress-bar glow: the same pixels on every run.
 [void][Win32]::SystemParametersInfo(0x1043, 0, [IntPtr]::Zero, 2)  # SPI_SETCLIENTAREAANIMATION = off
 [void][Win32]::SetCursorPos(0, 0)
-
-function Wait-For([scriptblock] $Probe, [string] $What, [int] $Seconds = 60) {
-  $deadline = (Get-Date).AddSeconds($Seconds)
-  $last = $null
-  do {
-    try {
-      $hit = & $Probe
-      if ($hit) { return $hit }
-    } catch {
-      $last = $_  # elements vanish while a page changes; retry
-    }
-    Start-Sleep -Milliseconds 250
-  } while ((Get-Date) -lt $deadline)
-  throw "timed out after ${Seconds}s waiting for $What $last"
-}
-
-function Find-Text($Element, [string] $Prefix) {
-  foreach ($e in $Element.FindAll($Descendants, $Any)) {
-    if ($e.Current.Name.StartsWith($Prefix)) { return $e }
-  }
-}
-
-function Find-Class($Element, [string] $Prefix) {
-  foreach ($e in $Element.FindAll($Descendants, $Any)) {
-    if ($e.Current.ClassName.StartsWith($Prefix)) { return $e }
-  }
-  throw "no $Prefix control"
-}
-
-function Find-TopWindow([scriptblock] $Match) {
-  foreach ($w in $UIA::RootElement.FindAll($Children, $IsWindow)) {
-    if (& $Match $w) { return $w }
-  }
-}
-
-# A message box owned by $Owner (UIA lists it under the owner or under the desktop).
-function Find-Dialog($Owner, [string] $Prefix) {
-  $candidates = @($Owner.FindAll($Children, $IsWindow)) + @($UIA::RootElement.FindAll($Children, $IsWindow))
-  foreach ($w in $candidates) {
-    if ($w.Current.ProcessId -eq $Owner.Current.ProcessId -and
-        $w.Current.NativeWindowHandle -ne $Owner.Current.NativeWindowHandle -and
-        (Find-Text $w $Prefix)) { return $w }
-  }
-}
-
-function Get-Hwnd($Element) { [IntPtr]$Element.Current.NativeWindowHandle }
-
-function Click($Window, [int] $Id) {
-  [void][Win32]::PostMessage((Get-Hwnd $Window), 0x0111, [IntPtr]$Id, [IntPtr]::Zero)  # WM_COMMAND
-}
-
-function Wait-Page($Window, [string] $Text, [int] $Seconds = 60) {
-  try {
-    [void](Wait-For { Find-Text $Window $Text } "'$Text'" $Seconds)
-  } catch {
-    $names = foreach ($e in $Window.FindAll($Descendants, $Any)) { $e.Current.Name }
-    Write-Host "window shows: $(($names | Where-Object { $_ }) -join ' | ')"
-    throw
-  }
-}
 
 # PrintWindow renders the window itself (immune to overlapping windows); crop the invisible
 # resize border to the visible frame.

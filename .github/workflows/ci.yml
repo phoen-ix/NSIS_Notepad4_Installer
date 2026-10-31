@@ -20,11 +20,16 @@ jobs:
       - name: Compile the installer (warnings are errors)
         run: makensis -WX -V2 Notepad4_en_x64_*.nsi "-XOutFile \"$RUNNER_TEMP/notepad4-install.exe\""
 
-  tour:
-    # Render check: the screenshot tour clicks through every installer and uninstaller page
-    # (installing Notepad4 on the throwaway runner). Commit PNGs from docs-screenshots.yml, not these.
-    name: Screenshot tour (render check)
-    runs-on: windows-latest
+  e2e:
+    # scripts/e2e.sh on throwaway runners: the screenshot tour as the page sweep, then the silent
+    # install, Windows Notepad replacement, online-update and uninstall journeys (e2e/COVERAGE.md).
+    # windows-2022 takes the installer's pre-Windows 11 branch, windows-2025 (build 26100) the Windows 11 one.
+    name: E2E (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,45 +43,17 @@ jobs:
             $nsis | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
           }
 
-      - name: Run the tour
+      - name: Run the e2e suite
         shell: bash
         env:
-          DOCS_TOUR_INSTALL: '1'
-        run: bash scripts/docs-screenshots.sh "$RUNNER_TEMP/screenshots"
+          E2E_INSTALL: '1'
+          ARTIFACTS: ${{ runner.temp }}/e2e
+        run: bash scripts/e2e.sh
 
+      # e2e.log, and the tour's PNGs as a render check (commit PNGs from docs-screenshots.yml, not these)
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: tour-render-check
-          path: ${{ runner.temp }}/screenshots/
+          name: e2e-${{ matrix.os }}
+          path: ${{ runner.temp }}/e2e/
           retention-days: 7
-
-  installer-tests:
-    # Silent installs on the throwaway runner; each script says what it checks.
-    name: Installer tests (windows)
-    runs-on: windows-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Put NSIS on PATH
-        shell: pwsh
-        run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
-            $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
-            if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress }
-            $nsis | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
-          }
-
-      - name: Compile the installer
-        shell: bash
-        run: makensis -WX -V2 Notepad4_en_x64_*.nsi "-XOutFile \"$RUNNER_TEMP/notepad4-install.exe\""
-
-      - name: Silent install (/D=, previous install folder)
-        shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1 -Installer "$env:RUNNER_TEMP\notepad4-install.exe"
-
-      - name: Online download checks the SHA-256
-        if: success() || failure()
-        shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-download.ps1

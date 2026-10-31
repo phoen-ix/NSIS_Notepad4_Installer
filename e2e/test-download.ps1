@@ -1,4 +1,4 @@
-# download_update.ps1 check (Windows PowerShell 5.1+, Python on PATH), run by ci.yml: the online
+# download_update.ps1 check (Windows PowerShell 5.1+, Python on PATH), run by scripts/e2e.sh: the online
 # fetch extracts the release zip only when its SHA-256 matches the digest check_update.ps1 wrote,
 # and deletes a rejected zip.
 # Serves a fixture zip from 127.0.0.1 and points %TEMP% at a scratch folder.

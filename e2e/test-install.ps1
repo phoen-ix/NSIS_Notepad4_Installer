@@ -1,4 +1,4 @@
-# Silent-install check (Windows PowerShell 5.1+, admin), run by ci.yml on a throwaway runner:
+# Silent-install check (Windows PowerShell 5.1+, admin), run by scripts/e2e.sh on a throwaway machine:
 # /D= picks the install folder, a later install without /D= stays in that folder
 # (InstallDirRegKey), and the uninstaller removes it again.
 param([Parameter(Mandatory = $true)] [string] $Installer)
