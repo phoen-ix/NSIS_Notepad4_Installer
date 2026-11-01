@@ -6,6 +6,8 @@ replace Windows Notepad.
 
 <img src="docs/screenshots/installer-components.png" alt="Installer components page: Notepad4 preselected, Fetch latest version (online) and Replace Windows Editor unchecked, install type Minimal" width="499">
 
+**Status:** maintained, bumped with each Notepad4 release. Download the installer from [Releases](../../releases/latest).
+
 ## Features
 
 - Installs Notepad4 and matepath (default folder `C:\Program Files\Notepad4`; an update reuses the
@@ -59,19 +61,22 @@ The **Fetch latest version (online)** section (or `/UPDATE` in silent mode) extr
 helpers to the installer's temp directory and runs them:
 
 1. [`check_update.ps1`](check_update.ps1) asks the GitHub API for the latest `zufuliu/notepad4` release
-   (10 s timeout), picks the first asset matching `Notepad4_en_x64_*.zip` that is not an `HD` build,
-   and writes `TagName`, `DownloadURL`, `SHA256` (the asset's `digest` from the API) and `Status`
-   (`OK`, `NoAsset` or `Error`) to `%TEMP%\notepad4_update.ini`.
+   (10 s timeout).
+   - It picks the first asset matching `Notepad4_en_x64_*.zip` that is not an `HD` build.
+   - It writes `TagName`, `DownloadURL`, `SHA256` (the asset's `digest` from the API) and `Status`
+     (`OK`, `NoAsset` or `Error`) to `%TEMP%\notepad4_update.ini`.
 2. If the status is `OK` and the tag differs from `BUNDLED_VERSION`, the installer asks whether to
    download it (silent mode downloads without asking).
 3. [`download_update.ps1`](download_update.ps1) downloads the zip (60 s timeout) to
-   `%TEMP%\Notepad4_latest.zip` and rejects it unless its SHA-256 equals `SHA256` (a missing digest
-   is a rejection too). It extracts the zip to `%TEMP%\Notepad4_latest` (moving the contents of a
-   top-level folder up), copies every `*.ini-default` to `*.ini`, and writes `OK` or `FAIL` to
-   `%TEMP%\notepad4_download_status.txt`.
+   `%TEMP%\Notepad4_latest.zip`.
+   - It rejects (and deletes) the zip unless its SHA-256 equals `SHA256`; a missing digest is a rejection too.
+   - It extracts the zip to `%TEMP%\Notepad4_latest` (moving the contents of a top-level folder up) and
+     copies every `*.ini-default` to `*.ini`.
+   - It writes `OK` or `FAIL` to `%TEMP%\notepad4_download_status.txt`.
 4. On `OK` the installer copies the downloaded `Notepad4.exe`, `matepath.exe`, the three `.ini` files
-   and `License.txt` over the bundled ones and records the new tag as the version in Apps & Features.
-   Otherwise it installs the bundled version (with a message in interactive mode).
+   and `License.txt` over the bundled ones.
+   - It records the new tag as the version in Apps & Features.
+   - Otherwise it installs the bundled version (with a message in interactive mode).
 
 The temp files are deleted afterwards.
 
@@ -110,12 +115,13 @@ tests:
 
 [`e2e/COVERAGE.md`](e2e/COVERAGE.md) maps every feature to its test.
 
-The tests really install Notepad4, replace Windows Notepad for a while and uninstall again. They
-therefore run only on throwaway Windows machines, and refuse to start without `E2E_INSTALL=1`. CI's `e2e`
-job runs them on windows-2022 and windows-2025, which cover the pre-Windows 11 branch and the
-Windows 11 branch of the installer. On a disposable Windows VM with Git Bash, NSIS and Python on `PATH`,
-run `E2E_INSTALL=1 bash scripts/e2e.sh`. Output goes to `$ARTIFACTS`. Anywhere else the script stops
-after the two compiles.
+The tests really install Notepad4, replace Windows Notepad for a while and uninstall again:
+- **Throwaway machines only:** they refuse to start without `E2E_INSTALL=1`.
+- **CI:** the `e2e` job runs them on windows-2022 and windows-2025, which cover the pre-Windows 11 branch
+  and the Windows 11 branch of the installer.
+- **Locally:** on a disposable Windows VM with Git Bash, NSIS and Python on `PATH`, run
+  `E2E_INSTALL=1 bash scripts/e2e.sh`. Output goes to `$ARTIFACTS`.
+- **Anywhere else** the script stops after the two compiles.
 
 ## Updating to a new Notepad4 release
 
@@ -125,12 +131,12 @@ follows from them.
 1. Download `Notepad4_en_x64_<version>.zip` (not the `HD` build) from the
    [Notepad4 releases](https://github.com/zufuliu/notepad4/releases) and check its SHA-256 against the
    release asset digest.
-2. `git mv Notepad4_en_x64_<old> Notepad4_en_x64_<new>` and replace its six files with the zip's
-   `Notepad4.exe`, `matepath.exe`, `License.txt` and the `*.ini-default` files renamed to `*.ini`
-   (`Notepad4.ini`, `matepath.ini`, `Notepad4 DarkTheme.ini`). Give `License.txt` a UTF-8 BOM
-   (`printf '\xef\xbb\xbf' | cat - License.txt > l && mv l License.txt`), otherwise the license page
-   shows `Â©`; the screenshot tour checks it. If the release's file set changed, adjust the `File`,
-   `CopyFiles` and `Delete` lines in the script.
+2. `git mv Notepad4_en_x64_<old> Notepad4_en_x64_<new>` and replace its six files with the zip's:
+   - `Notepad4.exe`, `matepath.exe` and `License.txt`;
+   - the `*.ini-default` files renamed to `*.ini` (`Notepad4.ini`, `matepath.ini`, `Notepad4 DarkTheme.ini`).
+   - Give `License.txt` a UTF-8 BOM (`printf '\xef\xbb\xbf' | cat - License.txt > l && mv l License.txt`),
+     otherwise the license page shows `Â©`; the screenshot tour checks it.
+   - If the release's file set changed, adjust the `File`, `CopyFiles` and `Delete` lines in the script.
 3. `git mv Notepad4_en_x64_<old>.nsi Notepad4_en_x64_<new>.nsi` and update the defines at the top:
    `BUNDLED_VERSION` must equal the GitHub release tag exactly (e.g. `v26.10r6392`; the online fetch
    compares the two), `RELEASEVERSION` is `en_x64_<tag>`.
