@@ -1,24 +1,28 @@
 # download_update.ps1 check (Windows PowerShell 5.1+, Python on PATH), run by scripts/e2e.sh: the online
 # fetch extracts the release zip only when its SHA-256 matches the digest check_update.ps1 wrote,
 # and deletes a rejected zip.
-# Serves a fixture zip from 127.0.0.1:$Port and points %TEMP% at a scratch folder.
+# Serves a fixture zip from 127.0.0.1:$Port and runs a copy of the script from a scratch folder (the
+# installer's $PLUGINSDIR): every file it reads and writes sits next to it, none in %TEMP%.
 param([int] $Port = 8765)
 $ErrorActionPreference = 'Stop'
 $root = Join-Path ([IO.Path]::GetTempPath()) 'notepad4-download-test'
 Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
 $serve = (New-Item -ItemType Directory "$root\serve").FullName
-$env:TEMP = (New-Item -ItemType Directory "$root\temp").FullName  # inherited by download_update.ps1
+$dir = (New-Item -ItemType Directory "$root\plugins").FullName
+$env:TEMP = (New-Item -ItemType Directory "$root\temp").FullName  # must stay empty
 Set-Content "$serve\Notepad4.ini-default" 'fixture'
 Compress-Archive "$serve\Notepad4.ini-default" "$serve\release.zip"
 $good = (Get-FileHash "$serve\release.zip" -Algorithm SHA256).Hash.ToLower()
 $url = "http://127.0.0.1:$Port/release.zip"
 
 function Fetch([string] $Sha256) {
-  Remove-Item "$env:TEMP\*" -Recurse -Force
+  Remove-Item "$dir\*" -Recurse -Force
+  Copy-Item "$PSScriptRoot\..\download_update.ps1" $dir
   '[Update]', 'TagName=v0.0r0', "DownloadURL=$url", "SHA256=$Sha256", 'Status=OK' |
-    Out-File "$env:TEMP\notepad4_update.ini" -Encoding ASCII
-  powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\..\download_update.ps1"
-  (Get-Content "$env:TEMP\notepad4_download_status.txt").Trim()
+    Out-File "$dir\notepad4_update.ini" -Encoding ASCII
+  powershell -NoProfile -ExecutionPolicy Bypass -File "$dir\download_update.ps1"
+  if (Get-ChildItem $env:TEMP) { throw "download_update.ps1 wrote to %TEMP%: $(Get-ChildItem $env:TEMP)" }
+  (Get-Content "$dir\notepad4_download_status.txt").Trim()
 }
 
 $server = Start-Process python -ArgumentList "-m http.server $Port --bind 127.0.0.1" -WorkingDirectory $serve -PassThru -WindowStyle Hidden
@@ -29,11 +33,11 @@ try {
     catch { if ((Get-Date) -gt $deadline) { throw "fixture server not up: $_" }; Start-Sleep -Milliseconds 250 }
   }
 
-  if ((Fetch $good) -ne 'OK' -or -not (Test-Path "$env:TEMP\Notepad4_latest\Notepad4.ini")) {
+  if ((Fetch $good) -ne 'OK' -or -not (Test-Path "$dir\Notepad4_latest\Notepad4.ini")) {
     throw 'the zip with the matching SHA-256 was not extracted'
   }
   foreach ($bad in ('0' * 64), '') {
-    if ((Fetch $bad) -ne 'FAIL' -or (Test-Path "$env:TEMP\Notepad4_latest") -or (Test-Path "$env:TEMP\Notepad4_latest.zip")) {
+    if ((Fetch $bad) -ne 'FAIL' -or (Test-Path "$dir\Notepad4_latest") -or (Test-Path "$dir\Notepad4_latest.zip")) {
       throw "the zip was accepted with SHA256='$bad'"
     }
   }

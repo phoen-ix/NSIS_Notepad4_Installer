@@ -1,8 +1,10 @@
 $ErrorActionPreference = "SilentlyContinue"
-$iniFile = "$env:TEMP\notepad4_update.ini"
-$statusFile = "$env:TEMP\notepad4_download_status.txt"
-$zipPath = "$env:TEMP\Notepad4_latest.zip"
-$extractDir = "$env:TEMP\Notepad4_latest"
+# Everything next to the script, in the installer's $PLUGINSDIR (per run, admin only): what is
+# verified here is what gets installed, with no window for another process to swap the files.
+$iniFile = Join-Path $PSScriptRoot "notepad4_update.ini"
+$statusFile = Join-Path $PSScriptRoot "notepad4_download_status.txt"
+$zipPath = Join-Path $PSScriptRoot "Notepad4_latest.zip"
+$extractDir = Join-Path $PSScriptRoot "Notepad4_latest"
 try {
     # Read download URL from the INI file
     $url = (Get-Content $iniFile | Where-Object { $_ -match "^DownloadURL=" }) -replace "^DownloadURL=", ""

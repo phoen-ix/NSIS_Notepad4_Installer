@@ -104,7 +104,7 @@ windows-2022 and windows-2025.
 | 40 | Same tag as bundled → no download | `e2e/test-update.ps1 › silent /UPDATE downloads nothing when the bundled version is the latest` | ✅ |
 | 41 | Status NoAsset (no `en_x64` zip) → bundled | `e2e/test-update.ps1 › silent /UPDATE installs the bundled version when the release has no en_x64 zip` | ✅ |
 | 42 | Status Error (the API fails) → bundled | `e2e/test-update.ps1 › silent /UPDATE installs the bundled version when the release API fails` | ✅ |
-| 43 | The temp INI, status file, zip and extract folder are gone afterwards | every `e2e/test-update.ps1` journey (`Install-Fetching`) | ✅ |
+| 43 | The INI, status file, zip and extract folder live in `$PLUGINSDIR`: none of them in `%TEMP%` | every `e2e/test-update.ps1` journey (`Install-Fetching`); `e2e/test-download.ps1` (`%TEMP%` stays empty) | ✅ |
 | 44 | Message box "A newer version … is available" → Yes installs it | `e2e/test-update.ps1 › the wizard asks before installing a newer release; Yes installs it` | ✅ |
 | 45 | The same message box → No installs the bundled version, with no download | `e2e/test-update.ps1 › No to the newer release installs the bundled version` | ✅ |
 | 46 | Message box "Failed to download …" → bundled version | `e2e/test-update.ps1 › the wizard reports a failed download and installs the bundled version` | ✅ |

@@ -15,6 +15,7 @@ $log = "$root\server.log"
 $url = "http://127.0.0.1:$Port"
 $tag = 'v99.1r1'
 $zip = "Notepad4_en_x64_$tag.zip"
+# The online fetch works in $PLUGINSDIR only: none of its files may show up in the user-writable %TEMP%.
 $temps = 'notepad4_update.ini', 'notepad4_download_status.txt', 'Notepad4_latest.zip', 'Notepad4_latest' |
   ForEach-Object { Join-Path $env:TEMP $_ }
 
@@ -35,7 +36,7 @@ function Publish([string] $Tag, [string] $Digest, [string[]] $Assets = @("Notepa
 function Requests { @(Select-String -Path $log -Pattern '"GET (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value }) }
 
 # Runs $Install (silent: the installer arguments; else a wizard script); returns the paths the
-# installer fetched. The temp files must be gone afterwards.
+# installer fetched. None of the fetch's files may be in %TEMP% afterwards.
 function Install-Fetching($Install) {
   $seen = (Requests).Count
   if ($Install -is [scriptblock]) { & $Install } else { Install $Install }

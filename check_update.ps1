@@ -1,5 +1,6 @@
 $ErrorActionPreference = "SilentlyContinue"
-$iniFile = "$env:TEMP\notepad4_update.ini"
+# Next to the script: the installer runs it from $PLUGINSDIR (per run, admin only), never %TEMP%.
+$iniFile = Join-Path $PSScriptRoot "notepad4_update.ini"
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $response = Invoke-RestMethod -Uri "https://api.github.com/repos/zufuliu/notepad4/releases/latest" -TimeoutSec 10

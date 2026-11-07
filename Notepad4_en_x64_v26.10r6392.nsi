@@ -163,12 +163,13 @@ SectionIn 3
     ${PowerShellExecFile} "$PLUGINSDIR\check_update.ps1"
     Pop $R0  ; PowerShell output
 
-    ; Read results from temp INI
-    ReadINIStr $R1 "$TEMP\notepad4_update.ini" "Update" "Status"
+    ; Read the results; the helpers keep every file in $PLUGINSDIR (per run, admin only, removed
+    ; at exit), never in the user-writable %TEMP%
+    ReadINIStr $R1 "$PLUGINSDIR\notepad4_update.ini" "Update" "Status"
     StrCmp $R1 "OK" 0 updateCheckDone
 
     ; Read the latest tag name
-    ReadINIStr $R2 "$TEMP\notepad4_update.ini" "Update" "TagName"
+    ReadINIStr $R2 "$PLUGINSDIR\notepad4_update.ini" "Update" "TagName"
 
     ; Compare with bundled version
     StrCmp $R2 "${BUNDLED_VERSION}" updateCheckDone  ; same version, nothing to do
@@ -189,7 +190,7 @@ SectionIn 3
     Pop $R0  ; PowerShell output
 
     ; Check if download succeeded
-    FileOpen $R4 "$TEMP\notepad4_download_status.txt" r
+    FileOpen $R4 "$PLUGINSDIR\notepad4_download_status.txt" r
     FileRead $R4 $R5
     FileClose $R4
 
@@ -201,7 +202,7 @@ SectionIn 3
     StrCmp $R5 "OK" 0 downloadFailed
 
     ; Download succeeded — set variables
-    StrCpy $SourceDir "$TEMP\Notepad4_latest"
+    StrCpy $SourceDir "$PLUGINSDIR\Notepad4_latest"
     StrCpy $DisplayVersion $R2
     Goto updateCheckDone
 
@@ -211,9 +212,8 @@ SectionIn 3
         "Failed to download the latest version. The bundled version (${BUNDLED_VERSION}) will be installed."
 
     updateCheckDone:
-    ; Clean up temp files
-    Delete "$TEMP\notepad4_update.ini"
-    Delete "$TEMP\notepad4_download_status.txt"
+    Delete "$PLUGINSDIR\notepad4_update.ini"
+    Delete "$PLUGINSDIR\notepad4_download_status.txt"
 
 SectionEnd
 
@@ -245,7 +245,7 @@ SectionIn 1 2 3 RO
 
   ; Clean up downloaded files
   RMDir /r "$SourceDir"
-  Delete "$TEMP\Notepad4_latest.zip"
+  Delete "$PLUGINSDIR\Notepad4_latest.zip"
 
   skipCopyLatest:
 
